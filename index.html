@@ -219,6 +219,27 @@
         nicknameInput.addEventListener('change', () => {
             localStorage.setItem('mqtt_nickname', nicknameInput.value);
         });
+
+        async function loadHistory(limit = 10) {
+            try {
+                const res = await fetch(`/chat/api/messages?limit=${limit}`);
+                const messages = await res.json();
+
+                // Tyhjennä aloitustekstit (Yhdistetään...) kerran alussa
+                messagesDiv.innerHTML = "";
+
+                messages.forEach(m => {
+                    // tietokannasta tulee m.message ja m.nickname
+                    addMessage(m.nickname, m.message, false);
+                });
+
+                addSystemMessage(`Ladattu ${messages.length} viestiä tietokannasta.`);
+            } catch (err) {
+                console.error(err);
+                addSystemMessage("Viestihistorian lataus epäonnistui.");
+            }
+        }
+        
         
         client.on('connect', () => {
             console.log('Yhdistetty MQTT brokeriin');
@@ -234,6 +255,7 @@
                     console.error('Tilausvirhe:', err);
                 }
             });
+            loadHistory(10);
         });
         
         client.on('disconnect', () => {
